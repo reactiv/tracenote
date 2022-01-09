@@ -4,3 +4,4 @@ psycopg2-binary==2.9.3
 pydantic[email]
 python-multipart==0.0.5
 uvicorn==0.16.0
+bcrypt==3.2.0
