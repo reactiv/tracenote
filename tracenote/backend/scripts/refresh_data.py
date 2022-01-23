@@ -1,9 +1,11 @@
 import json
+from typing import List
 
 from sqlalchemy.orm import Session
 
 from app import crud, schemas
 from app.core.config import settings
+from app.core.data.twitter import TwitterReader
 from app.db.base_class import Base
 from app.db.init_db import init_db
 from app.db.session import engine, SessionLocal
@@ -31,8 +33,11 @@ def get_initial_user(db: Session) -> User:
 def load_tweets_from_json(db: Session):
     tweets_json = json.load(open('/Users/jamesgin/tracenote/tracenote/backend/app/notebooks/mytweets.json', 'r'))
     user_tweets = []
+    new_users = []
     for tweet in tweets_json:
-        author = get_or_create(db, TwitterUser, tweet['author_id'])
+        author, created = get_or_create(db, TwitterUser, tweet['author_id'])
+        if created:
+            new_users.append(author)
         urls = [
             TweetUrl(
                 short_url=url['url'],
@@ -47,7 +52,18 @@ def load_tweets_from_json(db: Session):
             urls=urls
         )
         user_tweets.append(UserTweet(tweet=tweet))
+    add_user_data(new_users)
     return user_tweets
+
+
+def add_user_data(users: List[TwitterUser]):
+    ids = [user.id for user in users]
+    reader = TwitterReader()
+    twitter_users = reader.get_users(ids)
+    data_dict = {t.id: (t.name, t.username) for t in twitter_users}
+    for user in users:
+        user.name = data_dict[user.id][0]
+        user.username = data_dict[user.id][1]
 
 
 def main():

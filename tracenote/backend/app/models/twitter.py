@@ -4,24 +4,24 @@ from sqlalchemy import Boolean, Column, Integer, String, BigInteger, ForeignKey,
 from sqlalchemy.orm import relationship
 
 from app.db.base_class import Base
-from app.models import User
 
 
 def get_or_create(session, model, value, key="id", **kwargs):
     instance = session.query(model).filter(getattr(model, key) == value).first()
     if instance:
-        return instance
+        return instance, False
     else:
         kwargs.update({key: value})
         instance = model(**kwargs)
         session.add(instance)
         session.commit()
-        return instance
+        return instance, True
 
 
 class TwitterUser(Base):
     id = Column(BigInteger, primary_key=True, index=True)
-    name = Column(String(50), index=True)
+    name = Column(String(50))
+    username = Column(String(50))
 
 
 class Tweet(Base):
